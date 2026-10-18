@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tafels Trainer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap">
+<style>
+:root{
+  --bg:#eef0ff; --card:#ffffff; --ink:#1d1b4b; --muted:#5b5a85; --pri:#4f46e5; --onpri:#fff;
+  --acc:#f59e0b; --ok:#bff0cf; --okb:#1f9d55; --bad:#ffd0d0; --badb:#d83a3a; --line:#1d1b4b1f;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#12142b; --card:#1d2147; --ink:#eceaff; --muted:#a9a7d6; --pri:#7c74ff; --onpri:#12142b;
+    --ok:#1f5a3b; --okb:#4fd18b; --bad:#6a2a2e; --badb:#ff7b7b; --line:#eceaff26; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12142b; --card:#1d2147; --ink:#eceaff; --muted:#a9a7d6; --pri:#7c74ff; --onpri:#12142b;
+  --ok:#1f5a3b; --okb:#4fd18b; --bad:#6a2a2e; --badb:#ff7b7b; --line:#eceaff26; color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0; min-height:100vh; background:var(--bg); color:var(--ink); font-family:"Fredoka","Trebuchet MS",system-ui,sans-serif; display:flex; justify-content:center; padding:20px 14px 32px}
+main{width:100%; max-width:480px}
+h1{font-size:clamp(2rem,7vw,2.6rem); margin:6px 0 4px; text-align:center}
+.sub{margin:0 0 18px; text-align:center; color:var(--muted)}
+.panel{background:var(--card); border-radius:22px; padding:18px; box-shadow:0 4px 0 var(--line)}
+h2{margin:0 0 10px; font-size:1.1rem}
+.chips{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:12px}
+.chip{font:inherit; font-weight:700; font-size:1.3rem; padding:12px 0; border-radius:14px; border:2px solid var(--line); background:transparent; color:var(--ink); cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--pri); color:var(--onpri); border-color:var(--pri)}
+.row{display:flex; gap:8px; margin-bottom:16px}
+.small{font:inherit; font-weight:600; flex:1; padding:9px; border-radius:12px; border:0; background:var(--line); color:var(--ink); cursor:pointer}
+.big{font:inherit; font-weight:700; font-size:1.3rem; width:100%; padding:14px; border:0; border-radius:16px; background:var(--acc); color:#2b1a00; cursor:pointer; box-shadow:0 4px 0 #b97800}
+.big:disabled{opacity:.45; cursor:default}
+.big.alt{background:var(--line); color:var(--ink); box-shadow:none; margin-top:10px}
+button:focus-visible{outline:3px solid var(--acc); outline-offset:3px}
+.top{display:flex; justify-content:space-between; font-weight:600; margin-bottom:8px}
+.bar{height:10px; border-radius:99px; background:var(--line); overflow:hidden; margin-bottom:18px}
+.bar i{display:block; height:100%; width:100%; background:var(--acc)}
+.vraag{font-size:clamp(3rem,16vw,4.4rem); font-weight:700; text-align:center; margin:6px 0 18px; letter-spacing:.02em}
+.opties{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+.opt{font:inherit; font-weight:700; font-size:clamp(1.6rem,8vw,2.2rem); padding:18px 0; border-radius:18px; border:2px solid var(--line); background:var(--card); color:var(--ink); cursor:pointer; box-shadow:0 4px 0 var(--line)}
+.opt.ok{background:var(--ok); border-color:var(--okb)}
+.opt.fout{background:var(--bad); border-color:var(--badb)}
+.fb{min-height:1.6em; text-align:center; font-weight:600; margin:14px 0 0}
+.sterren{font-size:2.6rem; text-align:center; letter-spacing:.1em}
+.uitslag{text-align:center; font-size:1.2rem; margin:4px 0 12px}
+.nog{margin:10px 0 0; padding:0; list-style:none; display:flex; flex-wrap:wrap; gap:6px; justify-content:center}
+.nog li{background:var(--bad); padding:6px 12px; border-radius:99px; font-weight:600}
+.rec{text-align:center; color:var(--muted); margin:12px 0 0; min-height:1.4em}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>Tafels Trainer</h1>
+<p class="sub">Kies je tafels en beantwoord 10 sommen. Snel en goed levert de meeste punten op.</p>
+
+<section class="panel" id="kies">
+  <h2>Welke tafels wil je oefenen?</h2>
+  <div class="chips" id="chips"></div>
+  <div class="row"><button class="small" id="alle">Alle tafels</button><button class="small" id="wis">Wissen</button></div>
+  <button class="big" id="start">Start</button>
+  <p class="rec" id="rec0"></p>
+</section>
+
+<section class="panel" id="spel" hidden>
+  <div class="top"><span id="nr">Som 1 van 10</span><span id="streak"></span><span id="pt">0 punten</span></div>
+  <div class="bar"><i id="balk"></i></div>
+  <div class="vraag" id="vraag"></div>
+  <div class="opties" id="opties"></div>
+  <p class="fb" id="fb" aria-live="polite"></p>
+</section>
+
+<section class="panel" id="klaar" hidden>
+  <div class="sterren" id="sterren"></div>
+  <p class="uitslag" id="uitslag"></p>
+  <p class="rec" id="rec1"></p>
+  <p class="uitslag" id="nogtekst" hidden>Nog even oefenen:</p>
+  <ul class="nog" id="nog"></ul>
+  <button class="big" id="weer" style="margin-top:16px">Nog een keer</button>
+  <button class="big alt" id="andere">Andere tafels kiezen</button>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const TIJD=12000, AANTAL=10;
+let gekozen=new Set([2,5,10]);
+let vragen=[],i=0,score=0,streak=0,goed=0,fouten=[],antw=0,locked=false,t0=0,tick=null;
+
+function sleutel(){return "tafels-record-"+[...gekozen].sort((a,b)=>a-b).join("-")}
+function recLees(){try{return Number(localStorage.getItem(sleutel()))||0}catch(e){return 0}}
+function recSchrijf(v){try{localStorage.setItem(sleutel(),String(v))}catch(e){}}
+function shuffle(a){for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a}
+
+function tekenChips(){
+  $("chips").innerHTML="";
+  for(let n=1;n<=10;n++){
+    const b=document.createElement("button");
+    b.className="chip"; b.textContent=n; b.setAttribute("aria-pressed",gekozen.has(n));
+    b.setAttribute("aria-label","Tafel van "+n);
+    b.onclick=()=>{gekozen.has(n)?gekozen.delete(n):gekozen.add(n);tekenChips()};
+    $("chips").appendChild(b);
+  }
+  $("start").disabled=gekozen.size===0;
+  const r=recLees();
+  $("rec0").textContent=gekozen.size&&r?"Jouw record met deze tafels: "+r+" punten":"";
+}
+$("alle").onclick=()=>{gekozen=new Set([1,2,3,4,5,6,7,8,9,10]);tekenChips()};
+$("wis").onclick=()=>{gekozen=new Set();tekenChips()};
+
+function toon(id){["kies","spel","klaar"].forEach(x=>$(x).hidden=x!==id)}
+
+function start(){
+  if(!gekozen.size)return;
+  let pool=[];
+  gekozen.forEach(a=>{for(let b=1;b<=10;b++)pool.push([a,b])});
+  vragen=[];
+  while(vragen.length<AANTAL){vragen=vragen.concat(shuffle(pool.slice()))}
+  vragen=vragen.slice(0,AANTAL);
+  i=0;score=0;streak=0;goed=0;fouten=[];
+  toon("spel"); volgende();
+}
+
+function opties(a,b){
+  const ans=a*b, set=new Set([ans]);
+  const kand=shuffle([a*(b+1),a*(b-1),(a+1)*b,(a-1)*b,ans+a,ans-a,ans+10,ans-10,ans+2,ans-2]);
+  for(const k of kand){if(k>0&&!set.has(k))set.add(k);if(set.size===4)break}
+  let extra=1;
+  while(set.size<4){set.add(ans+extra++)}
+  return shuffle([...set]);
+}
+
+function volgende(){
+  if(i>=vragen.length)return einde();
+  const [a,b]=vragen[i]; antw=a*b; locked=false;
+  $("nr").textContent="Som "+(i+1)+" van "+AANTAL;
+  $("pt").textContent=score+" punten";
+  $("streak").textContent=streak>=2?"🔥 "+streak:"";
+  $("vraag").textContent=a+" × "+b;
+  $("fb").textContent="";
+  const o=$("opties"); o.innerHTML="";
+  opties(a,b).forEach(n=>{
+    const bt=document.createElement("button");
+    bt.className="opt"; bt.textContent=n; bt.dataset.n=n;
+    bt.onclick=()=>kies(n);
+    o.appendChild(bt);
+  });
+  t0=Date.now(); $("balk").style.width="100%";
+  clearInterval(tick);
+  tick=setInterval(()=>{
+    const rest=Math.max(0,1-(Date.now()-t0)/TIJD);
+    $("balk").style.width=(rest*100)+"%";
+    if(rest===0)kies(null);
+  },100);
+}
+
+function kies(n){
+  if(locked)return; locked=true; clearInterval(tick);
+  const [a,b]=vragen[i], snel=Math.max(0,1-(Date.now()-t0)/TIJD);
+  const juist=n===antw;
+  document.querySelectorAll(".opt").forEach(bt=>{
+    const v=Number(bt.dataset.n);
+    if(v===antw)bt.classList.add("ok");
+    else if(v===n)bt.classList.add("fout");
+  });
+  if(juist){
+    streak++; goed++;
+    score+=10+Math.round(snel*5)+Math.min(streak-1,4)*2;
+    $("fb").textContent=["Goed zo!","Super!","Yes!","Lekker bezig!"][Math.floor(Math.random()*4)];
+  }else{
+    streak=0; fouten.push([a,b]);
+    $("fb").textContent=(n===null?"Tijd om! ":"Bijna! ")+a+" × "+b+" = "+antw;
+  }
+  $("pt").textContent=score+" punten";
+  $("streak").textContent=streak>=2?"🔥 "+streak:"";
+  i++;
+  setTimeout(volgende,juist?700:1800);
+}
+
+function einde(){
+  toon("klaar");
+  $("sterren").textContent=goed>=9?"⭐⭐⭐":goed>=7?"⭐⭐":goed>=5?"⭐":"💪";
+  $("uitslag").textContent=goed+" van de "+AANTAL+" goed, "+score+" punten";
+  const oud=recLees();
+  if(score>oud){recSchrijf(score);$("rec1").textContent=oud?"Nieuw record!":"Je eerste score is bewaard."}
+  else $("rec1").textContent="Jouw record is "+oud+" punten.";
+  const uniek=[],gezien=new Set();
+  fouten.forEach(([a,b])=>{const k=a+"x"+b;if(!gezien.has(k)){gezien.add(k);uniek.push([a,b])}});
+  $("nogtekst").hidden=uniek.length===0;
+  $("nog").innerHTML=uniek.map(([a,b])=>"<li>"+a+" × "+b+" = "+a*b+"</li>").join("");
+}
+
+$("start").onclick=start;
+$("weer").onclick=start;
+$("andere").onclick=()=>{tekenChips();toon("kies")};
+tekenChips();
+</script>
+</body>
+</html>
